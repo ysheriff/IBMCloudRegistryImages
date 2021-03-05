@@ -1,0 +1,56 @@
+import groovy.json.JsonSlurper
+import jenkins.model.Jenkins
+
+apiKey="<My_Cluster_API_Key>"
+account="<My_IBM_Account_ID>"
+imageFilter="myApp"
+
+
+token=getTagFromIBMCloud()
+
+cloudRegistryImagesList = getImageListFromIBMCloud(token)
+
+images = parseImages(cloudRegistryImagesList)
+
+return images ;
+
+
+def parseImages(cloudRegistryImagesList){
+   def image_tag_list = []
+
+   for( String image : cloudRegistryImagesList){
+       if(image.contains('${imageFilter}')){
+          image_tag_list .add(image)
+      }
+    
+    }
+
+return image_tag_list
+
+}
+
+
+def getTagFromIBMCloud() {
+    tokenCall = ["/bin/sh", "-c", "curl -X POST  https://iam.cloud.ibm.com/identity/token -H \"content-type: application/x-www-form-urlencoded\" -H \"accept: application/json\" -d 'grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey&apikey=${apiKey}'"].execute()
+    proc.waitFor()
+      
+    def authToken = parseJSON(tokenCall.in.text)
+
+    return  "Authorization: Bearer " + authToken.access_token
+}
+
+def getImageListFromIBMCloud(token) {
+  
+   images = ["/bin/sh", "-c", "curl -X GET  -H \"accept: application/json\" -H \"Account: ${account}\" -H \"${token}\"  --url 'https://us.icr.io/api/v1/images?includeIBM=false&includePrivate=true&includeManifestLists=false&vulnerabilities=false'"].execute()
+
+   def imagesJson = parseJSON(images)
+
+   imagesSorted = imagesJson.sort{a,b-> b.Created<=>a.Created}
+
+   return imagesSorted.RepoTags
+
+}
+
+def parseJSON(json) {
+    return new groovy.json.JsonSlurper().parseText(json)
+}
