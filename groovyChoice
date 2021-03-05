@@ -15,6 +15,10 @@ images = parseImages(cloudRegistryImagesList)
 return images ;
 
 
+/*
+Sample method in case additional parsing is required
+*/
+
 def parseImages(cloudRegistryImagesList){
    def image_tag_list = []
 
@@ -29,6 +33,9 @@ return image_tag_list
 
 }
 
+/*
+Get Authorization Token using the API Key
+*/
 
 def getTagFromIBMCloud() {
     tokenCall = ["/bin/sh", "-c", "curl -X POST  https://iam.cloud.ibm.com/identity/token -H \"content-type: application/x-www-form-urlencoded\" -H \"accept: application/json\" -d 'grant_type=urn%3Aibm%3Aparams%3Aoauth%3Agrant-type%3Aapikey&apikey=${apiKey}'"].execute()
@@ -38,6 +45,11 @@ def getTagFromIBMCloud() {
 
     return  "Authorization: Bearer " + authToken.access_token
 }
+
+/*
+Call images API to fetch images using the Account number
+*/
+
 
 def getImageListFromIBMCloud(token) {
   
@@ -51,6 +63,9 @@ def getImageListFromIBMCloud(token) {
 
 }
 
+/*
+Parse to Array
+*/
 def parseJSON(json) {
     return new groovy.json.JsonSlurper().parseText(json)
 }
